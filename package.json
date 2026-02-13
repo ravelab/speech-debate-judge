@@ -1,0 +1,41 @@
+{
+  "name": "speech-debate-judge",
+  "productName": "Speech & Debate Judge",
+  "version": "1.0.0",
+  "description": "Desktop judging tool for speech and debate events",
+  "main": ".vite/build/index.js",
+  "private": true,
+  "scripts": {
+    "postinstall": "ln -sf mac-arm64 node_modules/@kutalia/whisper-node-addon/dist/darwin-arm64 && cd node_modules/@kutalia/whisper-node-addon/dist/mac-arm64 && for f in *.dylib whisper.node; do install_name_tool -add_rpath @loader_path \"$f\" 2>/dev/null; done",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "author": "alan",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
+    "@google/generative-ai": "^0.24.1",
+    "@kutalia/whisper-node-addon": "^1.1.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-store": "^11.0.2",
+    "openai": "^6.21.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
+    "@electron-forge/plugin-fuses": "^7.11.1",
+    "@electron-forge/plugin-vite": "^7.11.1",
+    "@electron/fuses": "^1.8.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "40.4.0",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  }
+}
