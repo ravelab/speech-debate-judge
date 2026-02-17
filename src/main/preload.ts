@@ -24,8 +24,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
 
-  aiJudge: (config: unknown, eventName: string, transcript: string, durationSeconds: number, idealTimeSeconds: number) =>
-    ipcRenderer.invoke(IPC.AI_JUDGE, config, eventName, transcript, durationSeconds, idealTimeSeconds),
+  aiJudge: (config: unknown, eventName: string, transcript: string, durationSeconds: number, idealTimeSeconds: number, existingScores: Array<{name: string, score: number}>) =>
+    ipcRenderer.invoke(IPC.AI_JUDGE, config, eventName, transcript, durationSeconds, idealTimeSeconds, existingScores),
 
   storeGet: (key: string) =>
     ipcRenderer.invoke(IPC.STORE_GET, key),

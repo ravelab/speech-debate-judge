@@ -80,11 +80,25 @@ export default function App() {
   }, [activeEventIndex, idealTimeInput]);
 
   const handleContestantJudged = useCallback((contestant: Contestant) => {
-    setEvents(prev => prev.map((e, i) =>
-      i === activeEventIndex
-        ? { ...e, contestants: [...e.contestants, contestant] }
-        : e
-    ));
+    setEvents(prev => prev.map((e, i) => {
+      if (i !== activeEventIndex) return e;
+      const allContestants = [...e.contestants.map(c => ({ ...c })), { ...contestant }];
+      // Sort by score ascending; new contestant sorts first among ties (keeps their score)
+      const sorted = allContestants.sort((a, b) => {
+        if (a.score !== b.score) return a.score - b.score;
+        return a.id === contestant.id ? -1 : b.id === contestant.id ? 1 : 0;
+      });
+      // Push duplicates upward so no two contestants share a score
+      for (let j = 1; j < sorted.length; j++) {
+        if (sorted[j].score <= sorted[j - 1].score) {
+          sorted[j].score = Math.min(30, sorted[j - 1].score + 1);
+        }
+      }
+      // Apply adjusted scores back, preserving original order
+      const scoreMap = new Map(sorted.map(c => [c.id, c.score]));
+      const adjusted = e.contestants.map(c => ({ ...c, score: scoreMap.get(c.id) ?? c.score }));
+      return { ...e, contestants: [...adjusted, { ...contestant, score: scoreMap.get(contestant.id) ?? contestant.score }] };
+    }));
   }, [activeEventIndex]);
 
   const handleContestantUpdated = useCallback((updated: Contestant) => {
@@ -110,21 +124,24 @@ export default function App() {
   };
 
   const handleLoadSession = useCallback((session: JudgingSession) => {
+    let loadedEvents: EventGroup[] = [];
     if (session.events && session.events.length > 0) {
-      setEvents(session.events.map(e => ({ ...e, idealTime: e.idealTime ?? 0 })));
+      loadedEvents = session.events.map(e => ({ ...e, idealTime: e.idealTime ?? 0 }));
     } else if ((session as JudgingSession & { rounds?: EventGroup[] }).rounds?.length) {
       const rounds = (session as JudgingSession & { rounds: EventGroup[] }).rounds;
-      setEvents(rounds.map(r => ({ ...r, idealTime: (r as EventGroup).idealTime ?? 0 })));
+      loadedEvents = rounds.map(r => ({ ...r, idealTime: (r as EventGroup).idealTime ?? 0 }));
     } else if (session.contestants && session.eventName) {
-      setEvents([{
+      loadedEvents = [{
         id: crypto.randomUUID(),
         eventName: session.eventName,
         idealTime: 0,
         contestants: session.contestants.map(c => ({ ...c, duration: c.duration ?? 0 })),
         createdAt: session.createdAt,
-      }]);
+      }];
     }
+    setEvents(loadedEvents);
     setActiveEventIndex(0);
+    setIdealTimeInput(loadedEvents[0]?.idealTime ? formatIdealTime(loadedEvents[0].idealTime) : '');
     setShowHistory(false);
   }, []);
 
@@ -172,12 +189,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Title bar spacer for hiddenInset */}
-      <div className="h-8 app-drag" />
-
+      {/* Drag region for macOS title bar — scrolls with content */}
+      <div className="h-10 app-drag" />
       <div className="max-w-3xl mx-auto px-6 pb-8">
         {/* Header */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-4 pt-1">
           <label className="text-sm text-gray-400 whitespace-nowrap shrink-0">Event:</label>
           <input
             type="text"
@@ -222,7 +238,7 @@ export default function App() {
         </div>
 
         {/* Event Tabs */}
-        <div className="flex flex-wrap items-center gap-1 mb-4">
+        <div className="flex flex-wrap items-center gap-1 mb-4 pt-3">
           {events.map((evt, i) => (
             <div key={evt.id} className="flex items-center">
               <button
@@ -267,6 +283,7 @@ export default function App() {
           idealTime={activeEvent?.idealTime || 0}
           onContestantJudged={handleContestantJudged}
           contestantCount={activeEvent?.contestants.length || 0}
+          existingScores={(activeEvent?.contestants || []).map(c => ({ name: c.name, score: c.score }))}
         />
 
         {/* Contestant List */}

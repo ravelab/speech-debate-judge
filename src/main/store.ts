@@ -42,12 +42,21 @@ interface SessionSchema {
   contestants?: Array<ContestantSchema & { duration?: number }>;
 }
 
+interface WindowBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isMaximized: boolean;
+}
+
 interface StoreSchema {
   apiKey: string;
   apiKeys: ApiKeys;
   providerConfig: ProviderConfig;
   whisperModel: string;
   sessions: SessionSchema[];
+  windowBounds: WindowBounds | null;
 }
 
 const store = new Store<StoreSchema>({
@@ -65,6 +74,7 @@ const store = new Store<StoreSchema>({
     },
     whisperModel: 'ggml-small.en.bin',
     sessions: [],
+    windowBounds: null,
   },
   encryptionKey: 'speech-debate-judge-v1',
 });
@@ -165,6 +175,14 @@ export function deleteSession(id: string): void {
 
 export function getProviderConfig(): ProviderConfig {
   return store.get('providerConfig');
+}
+
+export function getWindowBounds(): WindowBounds | null {
+  return store.get('windowBounds');
+}
+
+export function setWindowBounds(bounds: WindowBounds): void {
+  store.set('windowBounds', bounds);
 }
 
 export default store;

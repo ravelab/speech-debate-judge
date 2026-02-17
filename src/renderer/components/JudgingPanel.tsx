@@ -9,6 +9,7 @@ interface JudgingPanelProps {
   idealTime: number;
   onContestantJudged: (contestant: Contestant) => void;
   contestantCount: number;
+  existingScores: Array<{name: string, score: number}>;
 }
 
 export function JudgingPanel({
@@ -16,6 +17,7 @@ export function JudgingPanel({
   idealTime,
   onContestantJudged,
   contestantCount,
+  existingScores,
 }: JudgingPanelProps) {
   const [studentName, setStudentName] = useState('');
   const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null);
@@ -84,8 +86,9 @@ export function JudgingPanel({
   const handleStop = async () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     const finalDuration = elapsedRef.current;
-    const remainingAudio = stopRecording();
+    const remainingAudio = stopRecording(); // Stop mic immediately
 
+    // Transcribe any remaining audio buffer before judging
     let finalTranscript = transcript;
     if (remainingAudio.length > 0) {
       finalTranscript = await transcribeAll(remainingAudio);
@@ -102,7 +105,7 @@ export function JudgingPanel({
       if (!config || !config.apiKey) {
         throw new Error('API key not configured. Please set your API key in Settings.');
       }
-      const result = await window.electronAPI.aiJudge(config, eventName, finalTranscript, finalDuration, idealTime);
+      const result = await window.electronAPI.aiJudge(config, eventName, finalTranscript, finalDuration, idealTime, existingScores);
       setJudgeResult(result);
 
       const contestant: Contestant = {

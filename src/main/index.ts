@@ -10,6 +10,8 @@ import {
   getSessions,
   saveSession,
   deleteSession,
+  getWindowBounds,
+  setWindowBounds,
 } from './store';
 import type { ProviderConfig } from '../renderer/lib/types';
 
@@ -24,9 +26,12 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 let mainWindow: BrowserWindow | null = null;
 
 const createWindow = () => {
+  const saved = getWindowBounds();
+
   mainWindow = new BrowserWindow({
     minWidth: 480,
     minHeight: 600,
+    ...(saved ? { x: saved.x, y: saved.y, width: saved.width, height: saved.height } : { width: 900, height: 700 }),
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
@@ -36,7 +41,27 @@ const createWindow = () => {
     },
   });
 
-  mainWindow.maximize();
+  if (saved?.isMaximized) {
+    mainWindow.maximize();
+  }
+
+  // Save window bounds on move/resize
+  const saveBounds = () => {
+    if (!mainWindow) return;
+    const isMaximized = mainWindow.isMaximized();
+    if (!isMaximized) {
+      const bounds = mainWindow.getBounds();
+      setWindowBounds({ ...bounds, isMaximized: false });
+    }
+  };
+  mainWindow.on('resize', saveBounds);
+  mainWindow.on('move', saveBounds);
+  mainWindow.on('maximize', () => {
+    if (!mainWindow) return;
+    const bounds = mainWindow.getBounds();
+    setWindowBounds({ ...bounds, isMaximized: true });
+  });
+  mainWindow.on('unmaximize', saveBounds);
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -74,8 +99,8 @@ ipcMain.handle(IPC.MODEL_GET_STATUS, async () => {
 
 ipcMain.handle(
   IPC.AI_JUDGE,
-  async (_event, config: ProviderConfig, eventName: string, transcript: string, durationSeconds: number, idealTimeSeconds: number) => {
-    return judgeTranscript(config, eventName, transcript, durationSeconds, idealTimeSeconds);
+  async (_event, config: ProviderConfig, eventName: string, transcript: string, durationSeconds: number, idealTimeSeconds: number, existingScores: Array<{name: string, score: number}>) => {
+    return judgeTranscript(config, eventName, transcript, durationSeconds, idealTimeSeconds, existingScores);
   }
 );
 

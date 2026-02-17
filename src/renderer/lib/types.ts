@@ -54,7 +54,7 @@ export interface ElectronAPI {
   modelDownload: () => Promise<void>;
   modelGetStatus: () => Promise<ModelStatus>;
   onModelDownloadProgress: (callback: (progress: number) => void) => () => void;
-  aiJudge: (config: ProviderConfig, eventName: string, transcript: string, durationSeconds: number, idealTimeSeconds: number) => Promise<JudgeResult>;
+  aiJudge: (config: ProviderConfig, eventName: string, transcript: string, durationSeconds: number, idealTimeSeconds: number, existingScores: Array<{name: string, score: number}>) => Promise<JudgeResult>;
   storeGet: (key: string) => Promise<unknown>;
   storeSet: (key: string, value: unknown) => Promise<void>;
   storeGetSessions: () => Promise<JudgingSession[]>;

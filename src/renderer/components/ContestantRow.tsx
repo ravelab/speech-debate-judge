@@ -42,7 +42,7 @@ export function ContestantRow({ contestant, displayIndex, onUpdated }: Contestan
   const saveEdits = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!onUpdated) return;
-    const newScore = Math.min(30, Math.max(20, Math.round((parseFloat(editScore) || contestant.score) * 10) / 10));
+    const newScore = Math.min(30, Math.max(20, Math.round(parseFloat(editScore) || contestant.score)));
     const newDuration = parseDuration(editTime);
     const newName = editName.trim() || contestant.name;
     onUpdated({ ...contestant, name: newName, score: newScore, duration: newDuration });
@@ -83,7 +83,7 @@ export function ContestantRow({ contestant, displayIndex, onUpdated }: Contestan
             type="number"
             min={20}
             max={30}
-            step={0.1}
+            step={1}
             value={editScore}
             onChange={(e) => setEditScore(e.target.value)}
             className="w-16 shrink-0 bg-gray-700 border border-gray-500 rounded px-1.5 py-0.5 text-xs text-white text-center focus:outline-none focus:border-blue-500"
